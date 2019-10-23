@@ -10,7 +10,22 @@ class AugmentedRandomSearch():
     def __init__(self,env_name,policy_params):
         self.env=gym.make(env_name)
 
-        policy_params['ob_dim']=self.env.observation_space.shape[0]
+        self.hyper_parameters=dict(
+            enable_v1=True,
+            enable_v2=True,
+            enable_t=True,
+            learning_rate=0.02,#alpha
+            exploration_noise=0.03,#mu
+            n_directions=8,#N
+            n_top_directions=4,#b
+            rollout_length=self.env.spec.max_episode_steps
+        )
+
+        for key in self.hyper_parameters.keys():
+            if key in policy_params:
+                self.hyper_parameters[key]=policy_params[key]
+
+        policy_params['ob_dim']=np.array(self.env.observation_space.shape).prod()
         if self.env.action_space.shape==tuple():
             policy_params['ac_dim']=self.env.action_space.n
             self.policy=policies.LinearPolicyDiscrate(policy_params)
@@ -19,16 +34,7 @@ class AugmentedRandomSearch():
             self.policy=policies.LinearPolicy(policy_params)
 
         
-        self.hyper_parameters=dict(
-            enable_v1=True,
-            enable_v2=True,
-            enable_t=True,
-            learning_rate=0.02,#alpha
-            exploration_noise=0.01,#mu
-            n_directions=8,#N
-            n_top_directions=4,#b
-            rollout_length=100
-        )
+
         #self.hyper_parameters=AttrDict(hyp_parameters)
 
     def _rollout(self,shift=0,rollout_length=None,do_render=False):
@@ -71,6 +77,7 @@ class AugmentedRandomSearch():
 
         rollout_result=[]
         for i in range(n_directions):
+            print('.',end='')
             modifier=self.hyper_parameters['exploration_noise']
             learning_rate=self.hyper_parameters['learning_rate']
             #デルタをサンプリング
@@ -94,7 +101,7 @@ class AugmentedRandomSearch():
         sigma_R=1
         if self.hyper_parameters['enable_v1']:
             sigma_R=np.std(rollout_result[:,1:])
-            print(sigma_R)
+            #print(sigma_R)
 
         #t効果
         if self.hyper_parameters['enable_v1']:

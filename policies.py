@@ -35,6 +35,7 @@ class LinearPolicy(Policy):
         self.ob_std=1
 
     def act(self,ob):
+        ob=ob.flatten()
         if self.enable_v2:
             ob=self.normalize_observation(ob)    
         return np.dot(self.weights,ob)
@@ -65,6 +66,7 @@ class LinearPolicyDiscrate(LinearPolicy):
     """
 
     def act(self,ob):
+        ob=ob.flatten()
         if self.enable_v2:
             ob=self.normalize_observation(ob) 
         return np.dot(self.weights,ob).argmax()
