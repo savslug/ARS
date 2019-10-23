@@ -27,14 +27,36 @@ class LinearPolicy(Policy):
 
     def __init__(self, policy_params):
         Policy.__init__(self, policy_params)
-        self.enable_v1=policy_params['enable_v1']
         self.enable_v2=policy_params['enable_v2']
-        self.enable_t=policy_params['enable_t']
         self.weights = np.zeros((self.ac_dim, self.ob_dim), dtype = np.float64)
 
+        self.observed_history=[]
+        self.ob_mean=0
+        self.ob_std=1
+
     def act(self,ob):
+        if self.enable_v2:
+            ob=self.normalize_observation(ob)    
         return np.dot(self.weights,ob)
 
+    def normalize_observation(self,ob):
+        """
+        過去の観測を元に入力を正規化．
+        V2効果．
+        """
+        self.observed_history.append(ob)
+        ret=(ob-self.ob_mean)/self.ob_std
+        return ret
+
+    def ob_stat_update(self,):
+        """
+        正規化のためのMeanとStdを更新．
+        """
+        hist=np.array(self.observed_history)
+        self.ob_mean=np.mean(hist,axis=0)
+        self.ob_std=np.std(hist,axis=0)+1e-10
+
+        return
 
 class LinearPolicyDiscrate(LinearPolicy):
     """
@@ -43,5 +65,7 @@ class LinearPolicyDiscrate(LinearPolicy):
     """
 
     def act(self,ob):
+        if self.enable_v2:
+            ob=self.normalize_observation(ob) 
         return np.dot(self.weights,ob).argmax()
 

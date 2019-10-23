@@ -74,7 +74,7 @@ class AugmentedRandomSearch():
             modifier=self.hyper_parameters['exploration_noise']
             learning_rate=self.hyper_parameters['learning_rate']
             #デルタをサンプリング
-            delta=np.random.normal(0,1,size=self.policy.weights.shape)*modifier
+            delta=np.random.normal(0,modifier,size=self.policy.weights.shape)
             #デルタの正負2通りでポリシーを設定しロールアウト
             policy_weights_before=self.policy.weights
             self.policy.weights+=delta
@@ -88,9 +88,31 @@ class AugmentedRandomSearch():
 
         rollout_result=np.array(rollout_result)
         #更新差分の計算
+        
+
+        #V1効果
+        sigma_R=1
+        if self.hyper_parameters['enable_v1']:
+            sigma_R=np.std(rollout_result[:,1:])
+            print(sigma_R)
+
+        #t効果
+        if self.hyper_parameters['enable_v1']:
+            b=self.hyper_parameters['n_top_directions']
+            t=np.max(rollout_result[:,1:],axis=1)
+            arg=np.argsort(t)[::-1]
+            rollout_result=rollout_result[arg]
+            rollout_result=rollout_result[:b,:]
+        else:
+            b=n_directions
+
         evaluation_delta=rollout_result[:,1]-rollout_result[:,2]
         deltas=rollout_result[:,0]
-        g_hat=(learning_rate/n_directions)*np.sum(evaluation_delta*deltas)
+
+        g_hat=(learning_rate/b/sigma_R)*np.sum(evaluation_delta*deltas)
+
+        #V2効果
+        self.policy.ob_stat_update()
 
         return g_hat
 
