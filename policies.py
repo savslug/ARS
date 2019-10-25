@@ -70,4 +70,3 @@ class LinearPolicyDiscrate(LinearPolicy):
         if self.enable_v2:
             ob=self.normalize_observation(ob) 
         return np.dot(self.weights,ob).argmax()
-
