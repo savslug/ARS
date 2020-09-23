@@ -9,16 +9,16 @@ class AugmentedRandomSearch():
 
     def __init__(self,env_name,policy_params):
         self.env=gym.make(env_name)
-
+        self.passed_episodes=0
         self.hyper_parameters=dict(
             enable_v1=True,
-            enable_v2=True,
-            enable_t=True,
+            enable_v2=False,
+            enable_t=False,
             learning_rate=0.02,#alpha
-            exploration_noise=0.03,#mu
-            n_directions=8,#N
-            n_top_directions=4,#b
-            rollout_length=self.env.spec.max_episode_steps
+            exploration_noise=0.02,#mu
+            n_directions=1,#N
+            n_top_directions=1,#b
+            rollout_length=self.env.spec.max_episode_steps,
         )
 
         for key in self.hyper_parameters.keys():
@@ -136,7 +136,8 @@ class AugmentedRandomSearch():
         """
         評価．
         """
+        self.passed_episodes+=1
         if rollout_length==None:
             rollout_length=self.env.spec.max_episode_steps
         reward, r_steps = self._rollout(shift = 0, rollout_length = rollout_length,do_render=do_render)
-        print("reward:",reward,"survived_steps:",r_steps)
+        print("step:",self.passed_episodes,"reward:",reward,"survived_steps:",r_steps)
