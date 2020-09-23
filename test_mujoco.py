@@ -14,9 +14,9 @@ policy_params=dict(
 
 )
 #ars=AugmentedRandomSearch('CartPole-v1',policy_params)
-ars=AugmentedRandomSearch('Swimmer-v3',policy_params)
+ars=AugmentedRandomSearch('Hopper-v3',policy_params)
 
-for i in range(100):
+for i in range(10000):
     ars.evaluate(do_render=True)
     ars.train_step()
 
