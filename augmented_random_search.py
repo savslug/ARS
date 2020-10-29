@@ -50,7 +50,7 @@ class AugmentedRandomSearch():
         ob=self.env.reset()
         for i in range(rollout_length):
             if do_render:
-                self.env.render()
+                self.env.sim.render(1600,900)
             action=self.policy.act(ob)
             #print(action)
             ob,reward,done,_=self.env.step(action)
@@ -83,14 +83,15 @@ class AugmentedRandomSearch():
             #デルタをサンプリング
             delta=np.random.normal(0,modifier,size=self.policy.weights.shape)
             #デルタの正負2通りでポリシーを設定しロールアウト
-            policy_weights_before=self.policy.weights
-            self.policy.weights+=delta
+            tmp=self.policy.weights
+            
+            self.policy.weights=tmp+delta
             reward_p,_=self._rollout()
 
-            self.policy.weights-=delta
+            self.policy.weights=tmp-delta
             reward_n,_=self._rollout()
             
-            self.policy.weights=policy_weights_before
+            self.policy.weights=tmp
             rollout_result.append([delta,reward_p,reward_n])
 
         rollout_result=np.array(rollout_result)
@@ -104,7 +105,7 @@ class AugmentedRandomSearch():
             #print(sigma_R)
 
         #t効果
-        if self.hyper_parameters['enable_v1']:
+        if self.hyper_parameters['enable_t']:
             b=self.hyper_parameters['n_top_directions']
             t=np.max(rollout_result[:,1:],axis=1)
             arg=np.argsort(t)[::-1]
@@ -119,7 +120,8 @@ class AugmentedRandomSearch():
         g_hat=(learning_rate/b/sigma_R)*np.sum(evaluation_delta*deltas)
 
         #V2効果
-        self.policy.ob_stat_update()
+        if self.hyper_parameters['enable_v2']:
+            self.policy.ob_stat_update()
 
         return g_hat
 
